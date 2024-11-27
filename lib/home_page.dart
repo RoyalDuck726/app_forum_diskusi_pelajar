@@ -233,28 +233,24 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    return WillPopScope( // Tambahkan WillPopScope
+    return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
         backgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
-        //bikin app bar
         appBar: AppBar(
           title: Text('Forum Pelajar'),
           backgroundColor: isDark ? Colors.grey[850] : Colors.blue,
           actions: [
-            //tombol ganti tema
             IconButton(
               icon: Icon(isDark ? Icons.brightness_7 : Icons.brightness_2),
               onPressed: _toggleTheme,
               tooltip: isDark ? 'Mode Terang' : 'Mode Gelap',
             ),
-            //tombol logout
             IconButton(
               icon: Icon(Icons.logout),
               onPressed: _logout,
               tooltip: 'Keluar',
             ),
-            //tombol kelola user khusus admin
             if (widget.userRole == 'server')
               IconButton(
                 icon: Icon(Icons.manage_accounts),
@@ -263,156 +259,111 @@ class _HomePageState extends State<HomePage> {
               ),
           ],
         ),
-        //isi halaman
         body: SingleChildScrollView(
-          padding: EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              //kartu welcome
-              Card(
-                elevation: 4,
-                color: isDark ? Colors.grey[850] : Colors.white,
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Selamat Datang,',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        widget.currentUserId,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.blue[200] : Colors.blue,
-                        ),
-                      ),
-                      //badge admin
-                      if (widget.userRole == 'server')
-                        Container(
-                          margin: EdgeInsets.only(top: 8),
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.red[400],
-                            borderRadius: BorderRadius.circular(20),
+              // Tambahkan banner selamat datang
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.blue[700] : Colors.blue,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Selamat Datang,',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white.withOpacity(0.9),
                           ),
-                          child: Text(
-                            'Server Admin',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                        ),
+                        if (widget.userRole == 'server')
+                          Container(
+                            margin: EdgeInsets.only(left: 8),
+                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.admin_panel_settings,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Server Admin',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                    ],
-                  ),
+                      ],
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      widget.currentUserId,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(height: 24),
-              
-              //judul kategori
               Text(
-                'Kategori Mata Pelajaran',
+                'Kategori',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black87,
+                  color: isDark ? Colors.white : Colors.black,
                 ),
               ),
               SizedBox(height: 16),
-              
-              //grid kategori mapel
-              GridView.builder(
-                padding: EdgeInsets.all(16),
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: 1,
+              _buildCategoryGrid(),
+              if (widget.userRole == 'server')
+                Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: ElevatedButton.icon(
+                    onPressed: _showAddCategoryDialog,
+                    icon: Icon(Icons.add),
+                    label: Text('Tambah Kategori'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDark ? Colors.blue[700] : Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
                 ),
-                itemCount: categories.length + (widget.userRole == 'server' ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == categories.length && widget.userRole == 'server') {
-                    // Tombol tambah kategori untuk admin
-                    return Card(
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: InkWell(
-                        onTap: _showAddCategoryDialog,
-                        borderRadius: BorderRadius.circular(15),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_circle_outline,
-                              size: 48,
-                              color: isDark ? Colors.grey[400] : Colors.grey[600],
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Tambah\nKategori',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: isDark ? Colors.grey[400] : Colors.grey[600],
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-
-                  final category = categories[index];
-                  Color cardColor = _getCategoryColor(category['color']);
-                  IconData categoryIcon = _getIconData(category['icon'] ?? 'school');
-
-                  return _buildCategoryCard(
-                    category['name'],
-                    categoryIcon,
-                    cardColor,
-                    isDark,
-                    isAdmin: widget.userRole == 'server',
-                    onDelete: () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text('Hapus Kategori'),
-                          content: Text('Yakin ingin menghapus kategori ini? Semua post dalam kategori ini akan terhapus.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: Text('Batal'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: Text('Hapus', style: TextStyle(color: Colors.red)),
-                            ),
-                          ],
-                        ),
-                      );
-                      
-                      if (confirm == true) {
-                        final dbHelper = DatabaseHelper();
-                        await dbHelper.deleteCategory(category['name']);
-                        _loadCategories();
-                      }
-                    },
-                  );
-                },
-              ),
             ],
           ),
         ),
@@ -551,6 +502,87 @@ class _HomePageState extends State<HomePage> {
       default:
         return Icons.school;
     }
+  }
+
+  Widget _buildCategoryGrid() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.2,
+      ),
+      itemCount: categories.length,
+      itemBuilder: (context, index) {
+        final category = categories[index];
+        final categoryIcon = _getIconData(category['icon'] ?? 'school');
+        final cardColor = _getCategoryColor(category['color']);
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        
+        return _buildCategoryCard(
+          category['name'],
+          categoryIcon,
+          cardColor,
+          isDark,
+          isAdmin: widget.userRole == 'server',
+          onDelete: () async {
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text('Hapus Kategori'),
+                content: Text('Yakin ingin menghapus kategori ini? Semua post dalam kategori ini akan terhapus.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text('Batal'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: Text('Hapus', style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+              ),
+            );
+            
+            if (confirm == true) {
+              try {
+                // Tampilkan loading indicator
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext context) {
+                    return Center(child: CircularProgressIndicator());
+                  },
+                );
+
+                final dbHelper = DatabaseHelper();
+                await dbHelper.deleteCategory(category['name']);
+                
+                // Tutup loading indicator
+                Navigator.pop(context);
+                
+                // Refresh daftar kategori
+                await _loadCategories();
+                
+                // Tampilkan snackbar sukses
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Kategori berhasil dihapus')),
+                );
+              } catch (e) {
+                // Tutup loading indicator jika terjadi error
+                Navigator.pop(context);
+                print('Error deleting category: $e');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Gagal menghapus kategori')),
+                );
+              }
+            }
+          },
+        );
+      },
+    );
   }
 }
 

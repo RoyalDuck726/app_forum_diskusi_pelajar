@@ -478,13 +478,61 @@ class DatabaseHelper {
   Future<void> deleteCategory(String name) async {
     final db = await database;
     await db.transaction((txn) async {
-      // Hapus semua post dan data terkait dalam kategori ini
-      final posts = await txn.query('posts', where: 'category = ?', whereArgs: [name]);
-      for (var post in posts) {
-        await deletePost(post['id'] as int);
+      try {
+        // Dapatkan semua post dalam kategori ini
+        final posts = await txn.query(
+          'posts',
+          where: 'category = ?',
+          whereArgs: [name],
+        );
+
+        // Hapus semua data terkait untuk setiap post
+        for (var post in posts) {
+          final postId = post['id'] as int;
+          
+          // Hapus votes untuk komentar dari post ini
+          await txn.delete(
+            'comment_votes',
+            where: 'comment_id IN (SELECT id FROM comments WHERE post_id = ?)',
+            whereArgs: [postId],
+          );
+          
+          // Hapus komentar dari post ini
+          await txn.delete(
+            'comments',
+            where: 'post_id = ?',
+            whereArgs: [postId],
+          );
+          
+          // Hapus votes untuk post ini
+          await txn.delete(
+            'post_votes',
+            where: 'post_id = ?',
+            whereArgs: [postId],
+          );
+        }
+
+        // Hapus semua post dalam kategori ini
+        await txn.delete(
+          'posts',
+          where: 'category = ?',
+          whereArgs: [name],
+        );
+
+        // Terakhir, hapus kategori
+        final result = await txn.delete(
+          'categories',
+          where: 'name = ?',
+          whereArgs: [name],
+        );
+
+        if (result == 0) {
+          throw Exception('Kategori tidak ditemukan');
+        }
+      } catch (e) {
+        print('Error in deleteCategory transaction: $e');
+        rethrow; // Lempar error untuk ditangkap di UI
       }
-      // Hapus kategori
-      await txn.delete('categories', where: 'name = ?', whereArgs: [name]);
     });
   }
 
